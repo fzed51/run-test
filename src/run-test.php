@@ -4,33 +4,59 @@
  * /!\ SIDEEFFECT /!\
  */
 
-define('TEST_DIRECTORY', 'test');
+/**
+ * Liste les dossiers de test *
+ * @return array
+ **/
+function listDirectoryTest() : array
+{
+    $dir = [];
+    if (isset($argv[1])) {
+        for ($i = 1; $i < count($argv); $i++) {
+            if (is_dir($argv[$i])) {
+                $dir[] = realpath($argv[$i]);
+            }
+        }
+    }
+    if (empty($dir)) {
+        if (is_dir("./test")) {
+            $dir[] = realpath("./test");
+        }
+    }
+    if (empty($dir)) {
+        $dir[] = realpath(getcwd());
+        echo "/!\\ ATTENTION auccun dossier de test n'a été détecté." . PHP_EOL;
+    }
+    return $dir;
+}
 
 /**
  * Recherche les fichier de test (test_*.php)
  *
- * @param string $baseDir
+ * @param array $directories
  * @param bool $force
  * @return array
  */
-function rechercheTest(string $baseDir, bool $force): array
+function rechercheTest(array $directories, bool $force) : array
 {
     $regex = $force
         ? '/ftest_[^.]+\\.php/i'
         : '/test_[^.]+\\.php/i';
     $listeTest = [];
-    foreach (scandir($baseDir) as $item) {
-        if ($item == '.' || $item == '..' || $item == 'test_Run.php') {
-            continue;
-        }
-        $fullItem = $baseDir . '/' . $item;
-        if (is_dir($fullItem)) {
-            foreach (rechercheTest($fullItem, $force) as $test) {
-                $listeTest[] = $test;
+    foreach ($directories as $directory) {
+        foreach (scandir($directory) as $item) {
+            if ($item == '.' || $item == '..' || $item == 'test_Run.php') {
+                continue;
             }
-        } elseif (is_file($fullItem)) {
-            if (preg_match($regex, $item)) {
-                $listeTest[] = $fullItem;
+            $fullItem = $directory . '/' . $item;
+            if (is_dir($fullItem)) {
+                foreach (rechercheTest($fullItem, $force) as $test) {
+                    $listeTest[] = $test;
+                }
+            } elseif (is_file($fullItem)) {
+                if (preg_match($regex, $item)) {
+                    $listeTest[] = $fullItem;
+                }
             }
         }
     }
@@ -41,7 +67,7 @@ function rechercheTest(string $baseDir, bool $force): array
  * Démarre un chronomètre
  * @return callable
  */
-function startChrono(): callable
+function startChrono() : callable
 {
     $start = microtime(true);
     /**
@@ -62,7 +88,7 @@ function startChrono(): callable
  * @return array
  * @throws Exception
  */
-function formatNbCar($input, int $nbCar): array
+function formatNbCar($input, int $nbCar) : array
 {
     if (is_array($input)) {
 
@@ -78,27 +104,6 @@ function formatNbCar($input, int $nbCar): array
         return explode("\n", wordwrap($input, $nbCar, "\n", true));
     }
     throw new InvalidArgumentException("Le paramètre 1 de " . __FUNCTION__ . " n'est pas pris en compte");
-}
-
-/**
- * détermine si l'extension xDebug est chargée
- * @return bool
- */
-function xDebugIsLoaded(): bool
-{
-    $ext = extension_loaded('xdebug');
-    return $ext ? true : false;
-}
-
-/**
- * Active la fonction de profilage de xDebug
- * @return void
- */
-function activProfiler()
-{
-    ini_set('xdebug.profiler_append', 1);
-    ini_set('xdebug.profiler_output_name', "profiler_%t.cachegrind");
-    //ini_set('xdebug.profiler_enable', 1);
 }
 
 /**
@@ -134,9 +139,10 @@ function printColor($code, $message)
     }
 }
 
-$listeTest = rechercheTest(str_replace(" \\", " / ", __DIR__), true);
+$listeDirectory = listDirectoryTest();
+$listeTest = rechercheTest($listeDirectory, true);
 if (empty($listeTest)) {
-    $listeTest = rechercheTest(str_replace(" \\", " / ", __DIR__), false);
+    $listeTest = rechercheTest($listeDirectory, false);
 }
 
 foreach ($listeTest as $test) {
