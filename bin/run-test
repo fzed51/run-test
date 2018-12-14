@@ -1,0 +1,6 @@
+#!/usr/bin/env php
+<?php
+/**
+ * run-test tool.
+ */
+require __DIR__ . "/../src/run-test.php";
