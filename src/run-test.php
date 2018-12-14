@@ -10,7 +10,6 @@
  **/
 function listDirectoryTest($argv) : array
 {
-    var_export($argv);
     $dir = [];
     if (isset($argv[1])) {
         for ($i = 1; $i < count($argv); $i++) {
