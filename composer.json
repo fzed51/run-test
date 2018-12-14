@@ -2,6 +2,7 @@
   "name": "fzed51/run-test",
   "description": "Outil de test unitaire",
   "type": "library",
+  "license": "MIT",
   "authors": [
     {
       "name": "Fabien Sanchez",
