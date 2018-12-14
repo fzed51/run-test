@@ -14,6 +14,6 @@
     "php": "^7.1"
   },
   "bin": [
-    "./src/run-test.php"
+    "./bin/run-test"
   ]
 }
