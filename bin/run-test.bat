@@ -1,8 +1,5 @@
-@echo off
-REM run-test tool
-
-if "%PHP_PEAR_PHP_BIN%" neq "" (
-    set PHPBIN=%PHP_PEAR_PHP_BIN%
-) else set PHPBIN=php
-
-"%PHPBIN%" "%~dp0\run-test" %*
+@ECHO OFF
+setlocal DISABLEDELAYEDEXPANSION
+SET BIN_TARGET=%~dp0/../src/run-test.php
+echo %*
+php "%BIN_TARGET%" %*

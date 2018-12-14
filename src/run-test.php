@@ -8,8 +8,9 @@
  * Liste les dossiers de test *
  * @return array
  **/
-function listDirectoryTest() : array
+function listDirectoryTest($argv) : array
 {
+    var_export($argv);
     $dir = [];
     if (isset($argv[1])) {
         for ($i = 1; $i < count($argv); $i++) {
@@ -50,7 +51,7 @@ function rechercheTest(array $directories, bool $force) : array
             }
             $fullItem = $directory . '/' . $item;
             if (is_dir($fullItem)) {
-                foreach (rechercheTest($fullItem, $force) as $test) {
+                foreach (rechercheTest([$fullItem], $force) as $test) {
                     $listeTest[] = $test;
                 }
             } elseif (is_file($fullItem)) {
@@ -139,7 +140,7 @@ function printColor($code, $message)
     }
 }
 
-$listeDirectory = listDirectoryTest();
+$listeDirectory = listDirectoryTest($argv);
 $listeTest = rechercheTest($listeDirectory, true);
 if (empty($listeTest)) {
     $listeTest = rechercheTest($listeDirectory, false);
