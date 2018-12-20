@@ -1,30 +1,45 @@
 <?php
 
+use Console\Options\OptionParser;
+use Console\Options\Option;
+
+if (is_file("./vendor/autoload.php")) {
+    require("./vendor/autoload.php");
+} elseif (is_file(__DIR__ . "/../../../autoload.php")) {
+    require(__DIR__ . "/../../../autoload.php");
+}
+
 /**
  * /!\ SIDEEFFECT /!\
  */
+
+$options = new OptionParser([
+    (new Option('trace', 't'))->setType(Option::T_FLAG),
+    (new Option('profile', 'p'))->setType(Option::T_FLAG)
+]);
+$options->parse($argv);
 
 /**
  * Liste les dossiers de test *
  * @return array
  **/
-function listDirectoryTest($argv) : array
+function listDirectoryTest(array $dirPath = []) : array
 {
+
+    if (empty($dirPath)) {
+        $dirPath[] = 'test';
+    }
     $dir = [];
-    if (isset($argv[1])) {
-        for ($i = 1; $i < count($argv); $i++) {
-            if (is_dir($argv[$i])) {
-                $dir[] = realpath($argv[$i]);
-            }
+    for ($i = 0; $i < count($dirPath); $i++) {
+        $path = $dirPath[$i];
+        if (is_dir($path)) {
+            $dir[] = realpath($path);
+        } else {
+            echo "'$path' n'est pas un dossier valide" . PHP_EOL;
         }
     }
+
     if (empty($dir)) {
-        if (is_dir("./test")) {
-            $dir[] = realpath("./test");
-        }
-    }
-    if (empty($dir)) {
-        $dir[] = realpath(getcwd());
         echo "/!\\ ATTENTION auccun dossier de test n'a été détecté." . PHP_EOL;
     }
     return $dir;
@@ -139,14 +154,56 @@ function printColor($code, $message)
     }
 }
 
-$listeDirectory = listDirectoryTest($argv);
+/**
+ * transforme un tableau d'option en chaine
+ * @param array $arrayOpt tableau associatif d'options
+ * @return string
+ */
+function array2Options(array $arrayOpt) : string
+{
+    $lstOpt = [];
+    foreach ($arrayOpt as $opt => $value) {
+        $lstOpt[] = "$opt=$value";
+    }
+    return implode(" ", $lstOpt);
+}
+
+$listeDirectory = listDirectoryTest($options->getParameters());
 $listeTest = rechercheTest($listeDirectory, true);
 if (empty($listeTest)) {
     $listeTest = rechercheTest($listeDirectory, false);
 }
 
+$optionPhp = [
+    "log_errors" => 0,
+    "display_errors" => 1,
+    "xdebug.profiler_enable" => 1,
+    "xdebug.remote_connect_back" => 1,
+    "xdebug.remote_autostart" => 1,
+];
+if ($options['profile']) {
+    $profileDir = getcwd() . '/profile';
+    if (!is_dir($profileDir)) {
+        mkdir($profileDir);
+        echo "Le dossier '$profileDir' a été créé" . PHP_EOL;
+    }
+    $optionPhp['xdebug.profiler_enable'] = 1;
+    $optionPhp['xdebug.profiler_output_dir'] = $profileDir;
+}
+if ($options['trace']) {
+    $traceDir = getcwd() . '/trace';
+    if (!is_dir($traceDir)) {
+        mkdir($traceDir);
+        echo "Le dossier '$traceDir' a été créé" . PHP_EOL;
+    }
+    $optionPhp['xdebug.auto_trace'] = 1;
+    $optionPhp['xdebug.trace_output_dir'] = $profileDir;
+}
+
+$optionPhpStr = array2Options($optionPhp);
+
 foreach ($listeTest as $test) {
-    $commande = "php -dlog_errors=0 -ddisplay_errors=1 -dxdebug.profiler_enable=1 \"$test\"";
+    $commande = "php $optionPhpStr \"$test\"";
     echo "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
 
     $chrono = startChrono();
