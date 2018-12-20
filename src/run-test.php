@@ -163,7 +163,7 @@ function array2Options(array $arrayOpt) : string
 {
     $lstOpt = [];
     foreach ($arrayOpt as $opt => $value) {
-        $lstOpt[] = "$opt=$value";
+        $lstOpt[] = "-d$opt=$value";
     }
     return implode(" ", $lstOpt);
 }
