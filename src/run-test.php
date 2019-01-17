@@ -177,7 +177,7 @@ if (empty($listeTest)) {
 $optionPhp = [
     "log_errors" => 0,
     "display_errors" => 1,
-    "xdebug.profiler_enable" => 1,
+    "xdebug.remote_enable" => 1,
     "xdebug.remote_connect_back" => 1,
     "xdebug.remote_autostart" => 1,
 ];
