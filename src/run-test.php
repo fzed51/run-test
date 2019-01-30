@@ -173,14 +173,10 @@ function creerDossier($name)
 function filtreNDernier(array $listeFichier, $nDernier)
 {
     $listeFichierInfo = array_map(
-        $listeFichier,
-        /**
-         * @param string $fichier
-         * @return array
-         */
         function (string $fichier): array {
             return [$fichier, filemtime($fichier)];
-        }
+        },
+        $listeFichier
     );
     usort(
         $listeFichierInfo,
@@ -190,14 +186,10 @@ function filtreNDernier(array $listeFichier, $nDernier)
     );
     $listeFichierInfo = array_slice($listeFichierInfo, -1 * $nDernier);
     return array_map(
-        $listeFichierInfo,
-        /**
-         * @param array $info
-         * @return string
-         */
         function (array $info): string {
             return $info[0];
-        }
+        },
+        $listeFichierInfo
     );
 }
 
@@ -243,7 +235,9 @@ foreach ($listeTest as $test) {
     exec("$commande 2>&1", $output, $retour);
     $time = $chrono();
 
-    echo "\u{2502} " . implode(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
+    if(!empty($output)){
+        echo "\u{2502} " . implode(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
+    }
 
     if ($retour !== 0) {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
