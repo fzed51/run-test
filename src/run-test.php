@@ -9,7 +9,8 @@ use Console\Options\OptionParser;
 
 $options = new OptionParser([
     (new Option('trace', 't'))->setType(Option::T_FLAG),
-    (new Option('profile', 'p'))->setType(Option::T_FLAG)
+    (new Option('profile', 'p'))->setType(Option::T_FLAG),
+    (new Option('last', 'l'))->setType(Option::T_INTEGER)
 ]);
 $options->parse($argv);
 
@@ -169,10 +170,45 @@ function creerDossier($name)
     }
 }
 
+function filtreNDernier(array $listeFichier, $nDernier)
+{
+    $listeFichierInfo = array_map(
+        $listeFichier,
+        /**
+         * @param string $fichier
+         * @return array
+         */
+        function (string $fichier): array {
+            return [$fichier, filemtime($fichier)];
+        }
+    );
+    usort(
+        $listeFichierInfo,
+        function ($item1, $item2) {
+            return $item1[1] <=> $item2[1];
+        }
+    );
+    $listeFichierInfo = array_slice($listeFichierInfo, -1 * $nDernier);
+    return array_map(
+        $listeFichierInfo,
+        /**
+         * @param array $info
+         * @return string
+         */
+        function (array $info): string {
+            return $info[0];
+        }
+    );
+}
+
 $listeDirectory = listDirectoryTest($options->getParameters());
 $listeTest = rechercheTest($listeDirectory, true);
 if (empty($listeTest)) {
     $listeTest = rechercheTest($listeDirectory, false);
+}
+
+if (isset($options['last'])) {
+    $listeTest = filtreNdernier($listeTest, $options['last']);
 }
 
 $optionPhp = [
