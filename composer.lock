@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "fzed51/console-options",
-            "version": "v1.0.1",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fzed51/console-options.git",
-                "reference": "07624808fdd4094db682bf540146c859478f0c95"
+                "reference": "0049517b5b1bd96d5ffdc4daf89e40ae240559c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fzed51/console-options/zipball/07624808fdd4094db682bf540146c859478f0c95",
-                "reference": "07624808fdd4094db682bf540146c859478f0c95",
+                "url": "https://api.github.com/repos/fzed51/console-options/zipball/0049517b5b1bd96d5ffdc4daf89e40ae240559c9",
+                "reference": "0049517b5b1bd96d5ffdc4daf89e40ae240559c9",
                 "shasum": ""
             },
             "require-dev": {
@@ -40,7 +40,7 @@
                 }
             ],
             "description": "option parser pour ligne de commande PHP",
-            "time": "2018-12-20T12:22:26+00:00"
+            "time": "2019-01-30T10:29:11+00:00"
         }
     ],
     "packages-dev": [],
