@@ -1,13 +1,7 @@
 <?php
 
-use Console\Options\OptionParser;
 use Console\Options\Option;
-
-if (is_file("./vendor/autoload.php")) {
-    require("./vendor/autoload.php");
-} elseif (is_file(__DIR__ . "/../../../autoload.php")) {
-    require(__DIR__ . "/../../../autoload.php");
-}
+use Console\Options\OptionParser;
 
 /**
  * /!\ SIDEEFFECT /!\
@@ -21,8 +15,9 @@ $options->parse($argv);
 
 /**
  * Liste les dossiers de test *
+ * @param array $dirPath
  * @return array
- **/
+ */
 function listDirectoryTest(array $dirPath = []) : array
 {
 
@@ -30,8 +25,8 @@ function listDirectoryTest(array $dirPath = []) : array
         $dirPath[] = 'test';
     }
     $dir = [];
-    for ($i = 0; $i < count($dirPath); $i++) {
-        $path = $dirPath[$i];
+    foreach ($dirPath as $iValue) {
+        $path = $iValue;
         if (is_dir($path)) {
             $dir[] = realpath($path);
         } else {
@@ -59,8 +54,8 @@ function rechercheTest(array $directories, bool $force) : array
         : '/test_[^.]+\\.php/i';
     $listeTest = [];
     foreach ($directories as $directory) {
-        foreach (scandir($directory) as $item) {
-            if ($item == '.' || $item == '..' || $item == 'test_Run.php') {
+        foreach (scandir($directory, SCANDIR_SORT_NONE) as $item) {
+            if ($item === '.' || $item === '..') {
                 continue;
             }
             $fullItem = $directory . '/' . $item;
@@ -106,19 +101,16 @@ function startChrono() : callable
 function formatNbCar($input, int $nbCar) : array
 {
     if (is_array($input)) {
-
         return array_reduce(
             $input,
             function (array $output, string $line) use ($nbCar) {
                 $subOutput = explode("\n", wordwrap($line, $nbCar, "\n", true));
-                return $output = array_merge($output, $subOutput);
+                return array_merge($output, $subOutput);
             },
             []
         );
-    } elseif (is_string($input)) {
-        return explode("\n", wordwrap($input, $nbCar, "\n", true));
     }
-    throw new InvalidArgumentException("Le paramètre 1 de " . __FUNCTION__ . " n'est pas pris en compte");
+    return explode("\n", wordwrap((string)$input, $nbCar, "\n", true));
 }
 
 /**
@@ -130,28 +122,27 @@ function formatNbCar($input, int $nbCar) : array
 function printColor($code, $message)
 {
     $codes = [
-        "Black" => ["FG" => 30, "BG" => 40],
-        "Red" => ["FG" => 31, "BG" => 41],
-        "Green" => ["FG" => 32, "BG" => 42],
-        "Yellow" => ["FG" => 33, "BG" => 43],
-        "Blue" => ["FG" => 34, "BG" => 44],
-        "Magenta" => ["FG" => 35, "BG" => 45],
-        "Cyan" => ["FG" => 36, "BG" => 46],
-        "White" => ["FG" => 37, "BG" => 47],
-        "LightBlack" => ["FG" => 90, "BG" => 100],
-        "LightRed" => ["FG" => 91, "BG" => 101],
-        "LightGreen" => ["FG" => 92, "BG" => 102],
-        "LightYellow" => ["FG" => 93, "BG" => 103],
-        "LightBlue" => ["FG" => 94, "BG" => 104],
-        "LightMagenta" => ["FG" => 95, "BG" => 105],
-        "LightCyan" => ["FG" => 96, "BG" => 106],
-        "LightWhite" => ["FG" => 97, "BG" => 107]
+        'Black' => ['FG' => 30, 'BG' => 40],
+        'Red' => ['FG' => 31, 'BG' => 41],
+        'Green' => ['FG' => 32, 'BG' => 42],
+        'Yellow' => ['FG' => 33, 'BG' => 43],
+        'Blue' => ['FG' => 34, 'BG' => 44],
+        'Magenta' => ['FG' => 35, 'BG' => 45],
+        'Cyan' => ['FG' => 36, 'BG' => 46],
+        'White' => ['FG' => 37, 'BG' => 47],
+        'LightBlack' => ['FG' => 90, 'BG' => 100],
+        'LightRed' => ['FG' => 91, 'BG' => 101],
+        'LightGreen' => ['FG' => 92, 'BG' => 102],
+        'LightYellow' => ['FG' => 93, 'BG' => 103],
+        'LightBlue' => ['FG' => 94, 'BG' => 104],
+        'LightMagenta' => ['FG' => 95, 'BG' => 105],
+        'LightCyan' => ['FG' => 96, 'BG' => 106],
+        'LightWhite' => ['FG' => 97, 'BG' => 107]
     ];
     if (isset($codes[$code])) {
-        return chr(27) . "[" . $codes[$code]['FG'] . 'm' . $message . chr(27) . "[0m";
-    } else {
-        return $message;
+        return chr(27) . '[' . $codes[$code]['FG'] . 'm' . $message . chr(27) . '[0m';
     }
+    return $message;
 }
 
 /**
@@ -165,7 +156,17 @@ function array2Options(array $arrayOpt) : string
     foreach ($arrayOpt as $opt => $value) {
         $lstOpt[] = "-d$opt=$value";
     }
-    return implode(" ", $lstOpt);
+    return implode(' ', $lstOpt);
+}
+
+function creerDossier($name)
+{
+    if (!is_dir($name)) {
+        if (!mkdir($name) && !is_dir($name)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $name));
+        }
+        echo "Le dossier '$name' a été créé" . PHP_EOL;
+    }
 }
 
 $listeDirectory = listDirectoryTest($options->getParameters());
@@ -175,27 +176,22 @@ if (empty($listeTest)) {
 }
 
 $optionPhp = [
-    "log_errors" => 0,
-    "display_errors" => 1,
-    "xdebug.remote_enable" => 1,
-    "xdebug.remote_connect_back" => 1,
-    "xdebug.remote_autostart" => 1,
+    'log_errors' => 0,
+    'display_errors' => 1,
+    'xdebug.remote_enable' => 1,
+    'xdebug.remote_connect_back' => 1,
+    'xdebug.remote_autostart' => 1,
 ];
 if ($options['profile']) {
     $profileDir = getcwd() . '/profile';
-    if (!is_dir($profileDir)) {
-        mkdir($profileDir);
-        echo "Le dossier '$profileDir' a été créé" . PHP_EOL;
-    }
+    creerDossier($profileDir);
+
     $optionPhp['xdebug.profiler_enable'] = 1;
     $optionPhp['xdebug.profiler_output_dir'] = $profileDir;
 }
 if ($options['trace']) {
     $traceDir = getcwd() . '/trace';
-    if (!is_dir($traceDir)) {
-        mkdir($traceDir);
-        echo "Le dossier '$traceDir' a été créé" . PHP_EOL;
-    }
+    creerDossier($traceDir);
     $optionPhp['xdebug.auto_trace'] = 1;
     $optionPhp['xdebug.trace_output_dir'] = $profileDir;
 }
@@ -211,7 +207,7 @@ foreach ($listeTest as $test) {
     exec("$commande 2>&1", $output, $retour);
     $time = $chrono();
 
-    echo "\u{2502} " . join(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
+    echo "\u{2502} " . implode(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
 
     if ($retour !== 0) {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
