@@ -10,7 +10,8 @@ use Console\Options\OptionParser;
 $options = new OptionParser([
     (new Option('trace', 't'))->setType(Option::T_FLAG),
     (new Option('profile', 'p'))->setType(Option::T_FLAG),
-    (new Option('last', 'l'))->setType(Option::T_INTEGER)
+    (new Option('coverage', 'c'))->setType(Option::T_FLAG),
+    (new Option('last', 'l'))->setType(Option::T_INTEGER),
 ]);
 $options->parse($argv);
 
@@ -39,6 +40,34 @@ function listDirectoryTest(array $dirPath = []) : array
         echo "/!\\ ATTENTION auccun dossier de test n'a été détecté." . PHP_EOL;
     }
     return $dir;
+}
+
+/**
+ * liste les fichier php d'un dossier
+ * @param string $directory
+ * @param string $extension
+ * @return array
+ */
+function rechercheFichier(string $directory, string $extension): array
+{
+    $regex = "/\\.$extension$/i";
+    $files = [];
+    foreach (scandir($directory, SCANDIR_SORT_NONE) as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $fullItem = $directory . '/' . $item;
+        if (is_dir($fullItem)) {
+            foreach (rechercheTest([$fullItem]) as $test) {
+                $files[] = $test;
+            }
+        } elseif (is_file($fullItem)) {
+            if (preg_match($regex, $item)) {
+                $files[] = $fullItem;
+            }
+        }
+    }
+    return $files;
 }
 
 /**
@@ -160,6 +189,10 @@ function array2Options(array $arrayOpt) : string
     return implode(' ', $lstOpt);
 }
 
+/**
+ * créer un dossier
+ * @param $name
+ */
 function creerDossier($name)
 {
     if (!is_dir($name)) {
@@ -170,7 +203,30 @@ function creerDossier($name)
     }
 }
 
-function filtreNDernier(array $listeFichier, $nDernier)
+/**
+ * supprimer tous les fichier d'un dossiier
+ * @param $name
+ */
+function netoyerDossier($name)
+{
+    if (is_dir($name)) {
+        $files = array_diff(scandir($name, SCANDIR_SORT_NONE), ['.', '..']);
+        foreach ($files as $file) {
+            if (is_file("$name/$file")) {
+                unlink("$name/$file");
+            }
+        }
+        echo "Le dossier '$name' a été netoyé" . PHP_EOL;
+    }
+}
+
+/**
+ * garder les n dernier fichier modifié
+ * @param array $listeFichier
+ * @param int $nDernier
+ * @return array
+ */
+function filtreNDernier(array $listeFichier, int $nDernier)
 {
     $listeFichierInfo = array_map(
         function (string $fichier): array {
@@ -191,6 +247,52 @@ function filtreNDernier(array $listeFichier, $nDernier)
         },
         $listeFichierInfo
     );
+}
+
+/**
+ * donne le nombre de ligne dans un fichier
+ * @param string $fileName
+ * @return int
+ */
+function getNumberOfLinesInFile(string $fileName): int
+{
+    $buffer = file_get_contents($fileName);
+    $lines = substr_count($buffer, "\n");
+    if (\substr($buffer, -1) !== "\n") {
+        $lines++;
+    }
+    return $lines;
+}
+
+/**
+ * donne les statistique de couverture du code
+ * @param $src_directory
+ * @return array
+ */
+function getStatCodeCoverage(): array
+{
+    $statCcFile = rechercheFichier('./code-coverage', 'json');
+    $stats = [];
+    foreach ($statCcFile as $fileCc) {
+        $cc = json_decode(file_get_contents($fileCc));
+        foreach ($cc as $file => $lines) {
+            $stat = $stats[realpath($file)] ?? [];
+            foreach ($lines as $line => $cover) {
+                if ($cover > 0) {
+                    $stat[$line] = 1;
+                }
+            }
+            $stats[realpath($file)] = $stat;
+        }
+    }
+    foreach ($stats as $file => $stat) {
+        $nbLigne = getNumberOfLinesInFile($file);
+        $nbCover = count(array_filter($stat, function ($i) {
+            return $i > 0;
+        }));
+        $stats[$file] = round($nbCover * 100 / $nbLigne);
+    }
+    return $stats;
 }
 
 $listeDirectory = listDirectoryTest($options->getParameters());
@@ -223,17 +325,24 @@ if ($options['trace']) {
     $optionPhp['xdebug.auto_trace'] = 1;
     $optionPhp['xdebug.trace_output_dir'] = $profileDir;
 }
+$codecoverage = '';
+if ($options['coverage']) {
+    $codecoverage = '"' . __DIR__ . '/code-coverage-hook.php' . '" ';
+    $codeCoverageDir = getcwd() . '/code-coverage';
+    creerDossier($codeCoverageDir);
+    netoyerDossier($codeCoverageDir);
+}
 
 $optionPhpStr = array2Options($optionPhp);
 
 putenv('RUNTEST=On');
 
 foreach ($listeTest as $test) {
-    $commande = "php $optionPhpStr \"$test\"";
+    $commande = "php $optionPhpStr $codecoverage\"$test\"";
     echo "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
 
-    $chrono = startChrono();
     $output = [];
+    $chrono = startChrono();
     exec("$commande 2>&1", $output, $retour);
     $time = $chrono();
 
@@ -249,3 +358,12 @@ foreach ($listeTest as $test) {
 }
 
 putenv('RUNTEST');
+
+if ($options['coverage']) {
+    $cc = getStatCodeCoverage('./src');
+    echo 'CODE COVERAGE' . PHP_EOL;
+    echo '--------------' . PHP_EOL;
+    foreach ($cc as $file => $pourcent) {
+        echo $file . ' >> ' . $pourcent . '%' . PHP_EOL;
+    }
+}
