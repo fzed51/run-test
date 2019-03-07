@@ -280,13 +280,15 @@ function getStatCodeCoverage(): array
             foreach ($lines as $line => $cover) {
                 if ($cover > 0) {
                     $stat[$line] = 1;
+                }else {
+                    $stat[$line] = $stat[$line] ?? 0;
                 }
             }
             $stats[realpath($file)] = $stat;
         }
     }
     foreach ($stats as $file => $stat) {
-        $nbLigne = getNumberOfLinesInFile($file);
+        $nbLigne = count($stat);
         $nbCover = count(array_filter($stat, function ($i) {
             return $i > 0;
         }));
@@ -361,6 +363,7 @@ putenv('RUNTEST');
 
 if ($options['coverage']) {
     $cc = getStatCodeCoverage('./src');
+    ksort($cc);
     echo 'CODE COVERAGE' . PHP_EOL;
     echo '--------------' . PHP_EOL;
     foreach ($cc as $file => $pourcent) {
