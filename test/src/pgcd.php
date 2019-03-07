@@ -18,3 +18,8 @@ function pgcd(int $a, int $b): int
     }
     return $a;
 }
+
+function divise(int $a, int $b)
+{
+    return $a * $b;
+}
