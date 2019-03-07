@@ -8,9 +8,12 @@ declare(strict_types=1);
 
 chdir(__DIR__);
 
-function execute_run_test($test_path, array $options)
+/**
+ * @param $test_path - chemin du dossier de test
+ * @param array $options - option eventuelles de run-test
+ */
+function execute_run_test($test_path, array $options = [])
 {
-    $commande = "php \"../bin/run-test\" \"$test_path\"";
     $strOptions = '';
     foreach ($options as $k => $v) {
         $strOptions .= !empty($strOptions) ? ' ' : '';
@@ -25,9 +28,14 @@ function execute_run_test($test_path, array $options)
             }
         }
     }
+    $commande = "php \"../bin/run-test\" $strOptions \"$test_path\"";
+    echo $commande . PHP_EOL;
     echo shell_exec($commande) . PHP_EOL;
 }
 
+/**
+ * @param $message
+ */
 function message($message)
 {
     echo $message . PHP_EOL;
@@ -38,3 +46,6 @@ execute_run_test('./spec');
 
 message("exécution de run-test avec des tests forcés");
 execute_run_test('./spec-2');
+
+message("exécution de run-test avec code coverage");
+execute_run_test('./spec-3', ['c']);
