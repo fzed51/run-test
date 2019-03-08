@@ -44,6 +44,9 @@ function message($message)
 message("exécution de run-test");
 execute_run_test('./spec');
 
+message("exécution de run-test sans couleurs");
+execute_run_test('./spec', ['m']);
+
 message("exécution de run-test avec des tests forcés");
 execute_run_test('./spec-2');
 
