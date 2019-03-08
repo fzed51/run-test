@@ -11,6 +11,7 @@ $options = new OptionParser([
     (new Option('trace', 't'))->setType(Option::T_FLAG),
     (new Option('profile', 'p'))->setType(Option::T_FLAG),
     (new Option('coverage', 'c'))->setType(Option::T_FLAG),
+    (new Option('monochrome', 'm'))->setType(Option::T_FLAG),
     (new Option('last', 'l'))->setType(Option::T_INTEGER),
 ]);
 $options->parse($argv);
@@ -151,6 +152,7 @@ function formatNbCar($input, int $nbCar) : array
  */
 function printColor($code, $message)
 {
+    $monochrome = defined('MONOCHROME') ? MONOCHROME : false;
     $codes = [
         'Black' => ['FG' => 30, 'BG' => 40],
         'Red' => ['FG' => 31, 'BG' => 41],
@@ -169,7 +171,7 @@ function printColor($code, $message)
         'LightCyan' => ['FG' => 96, 'BG' => 106],
         'LightWhite' => ['FG' => 97, 'BG' => 107]
     ];
-    if (isset($codes[$code])) {
+    if (!$monochrome && isset($codes[$code])) {
         return chr(27) . '[' . $codes[$code]['FG'] . 'm' . $message . chr(27) . '[0m';
     }
     return $message;
@@ -295,6 +297,12 @@ function getStatCodeCoverage(): array
         $stats[$file] = round($nbCover * 100 / $nbLigne);
     }
     return $stats;
+}
+
+if ($options['monochrome']) {
+    define('MONOCHROME', true);
+} else {
+    define('MONOCHROME', false);
 }
 
 $listeDirectory = listDirectoryTest($options->getParameters());
