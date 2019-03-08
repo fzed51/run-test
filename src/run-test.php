@@ -370,11 +370,18 @@ foreach ($listeTest as $test) {
 putenv('RUNTEST');
 
 if ($options['coverage']) {
-    $cc = getStatCodeCoverage('./src');
+    $cc = getStatCodeCoverage();
     ksort($cc);
     echo 'CODE COVERAGE' . PHP_EOL;
     echo '--------------' . PHP_EOL;
+    $nbFile = 0;
+    $totalPoucent = 0;
     foreach ($cc as $file => $pourcent) {
         echo $file . ' >> ' . $pourcent . '%' . PHP_EOL;
+        $nbFile++;
+        $totalPoucent += (int)$pourcent;
     }
+    echo 'Couverture du code moyenne : '
+        . round($totalPoucent / $nbFile, 2)
+        . '% pour ' . $nbFile . ' fichier(s).' . PHP_EOL;
 }
