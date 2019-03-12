@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fbfd5a00549722a888cd42fabef3a076",
+    "content-hash": "71cc2b97483ea8daad0fff9ce24a1be9",
     "packages": [
         {
             "name": "fzed51/console-options",
@@ -51,7 +51,8 @@
     "prefer-lowest": false,
     "platform": {
         "php": "^7.1",
-        "ext-xdebug": "*"
+        "ext-xdebug": "*",
+        "ext-json": "*"
     },
     "platform-dev": []
 }

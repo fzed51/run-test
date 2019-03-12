@@ -21,5 +21,10 @@
   ],
   "scripts": {
     "test": "php ./test/test.php"
+  },
+  "autoload": {
+    "files": [
+      "./src/assert-error-handler-hook.php"
+    ]
   }
 }

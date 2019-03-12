@@ -41,14 +41,17 @@ function message($message)
     echo $message . PHP_EOL;
 }
 
-message("exécution de run-test");
+message('exécution de run-test');
 execute_run_test('./spec');
 
-message("exécution de run-test sans couleurs");
+message('exécution de run-test sans couleurs');
 execute_run_test('./spec', ['m']);
 
-message("exécution de run-test avec des tests forcés");
+message('exécution de run-test avec des tests forcés');
 execute_run_test('./spec-2');
 
-message("exécution de run-test avec code coverage");
+message('exécution de run-test avec code coverage');
 execute_run_test('./spec-3', ['c']);
+
+message("exécution de run-test avec les fonctions d'assert");
+execute_run_test('./spec-assert');

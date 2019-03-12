@@ -346,7 +346,6 @@ if ($options['coverage']) {
 $optionPhpStr = array2Options($optionPhp);
 
 putenv('RUNTEST=On');
-
 foreach ($listeTest as $test) {
     $commande = "php $optionPhpStr $codecoverage\"$test\"";
     echo "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
@@ -366,7 +365,6 @@ foreach ($listeTest as $test) {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;
     }
 }
-
 putenv('RUNTEST');
 
 if ($options['coverage']) {
