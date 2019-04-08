@@ -65,6 +65,84 @@ function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
     }
 }
 
+function ValidateDataSchema ($structure, $data, $location = '$'): array
+{
+    if (is_array($structure)) {
+        $out = [];
+        if (isAssoc($structure)) {
+            if (!is_array($data) || !isAssoc($data)) {
+                return [$location . " n'est pas une structure"];
+            }
+            foreach ($structure as $key => $value) {
+                foreach (ValidateDataSchema($structure[$key], $data[$key], $location . '.' . $key) as $err) {
+                    $out[] = $err;
+                }
+            }
+        } else {
+            if (!is_array($data) || isAssoc($data)) {
+                return [$location . " n'est pas un tableau"];
+            }
+            $nStruct = $structure[0];
+            foreach ($data as $idx => $value) {
+                foreach (ValidateDataSchema($nStruct, $value, $location . "[$idx]") as $err) {
+                    $out[] = $err;
+                }
+            }
+        }
+        return $out;
+    }
+    switch ($structure) {
+        case 'int':
+        case 'integer':
+            if (!is_int($data)) {
+                return [$location . " n'est pas de type integer"];
+            }
+            break;
+        case 'double':
+        case 'float':
+        case 'real':
+            if (!is_float($data)) {
+                return [$location . " n'est pas de type double"];
+            }
+            break;
+        case 'str':
+        case 'string':
+            if (!is_string($data)) {
+                return [$location . " n'est pas de type string"];
+            }
+            break;
+        case 'array':
+            if (!is_array($data) || isAssoc($data)) {
+                return [$location . " n'est pas un tableau"];
+            }
+            break;
+        case 'object':
+            if (!is_array($data) || !isAssoc($data)) {
+                return [$location . " n'est pas une structure"];
+            }
+            break;
+    }
+    return [];
+}
+
+/**
+ * @param $schema - description de la structure du JSON
+ * @param string $jsonString - chaine de caractère du JSON
+ * @param string $message
+ */
+function schemaJsonTest($schema, string $jsonString, string $message = 'structure JSON'): void
+{
+    $data = json_decode($jsonString, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception($message . ', la chaine de caractère n\'est pas un JSON valide');
+    }
+    $errs = ValidateDataSchema($schema, $data, '$');
+    if (!empty($errs)) {
+        throw new Exception($message . ', le schema du json n\'est pas valide, ' . implode(', ', $errs));
+    }
+}
+
+
 /**
      * @param callable $fn
      * @param \Exception $exceptionAttendu
@@ -84,6 +162,15 @@ function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
             }
         }
     }
+
+
+function isAssoc(array $arr)
+{
+    if ([] === $arr) {
+        return false;
+    }
+    return array_keys($arr) !== range(0, count($arr) - 1);
+}
 
     /**
      * @param callable $fn
