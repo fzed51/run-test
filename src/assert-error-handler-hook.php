@@ -8,20 +8,25 @@ declare(strict_types=1);
 
 namespace Assert;
 
-if (getenv('RUNTEST') !== false && (
-        strtolower(getenv('RUNTEST')) === 'on'
-        || strtolower(getenv('RUNTEST')) === 'yes'
-        || getenv('RUNTEST') === true
-        || getenv('RUNTEST') == 1
-    )) {
+use RuntimeException;
+use Throwable;
+use function set_error_handler;
+
+///** @noinspection TypeUnsafeComparisonInspection */
+//if (getenv('RUNTEST') !== false && (
+//        strtolower(getenv('RUNTEST')) === 'on'
+//        || strtolower(getenv('RUNTEST')) === 'yes'
+//        || getenv('RUNTEST') === true
+//        || getenv('RUNTEST') == 1
+//    )) {
 
     /**
      * Class Exception
      * @package Assert
      */
-    class Exception extends \RuntimeException
+class Exception extends RuntimeException
     {
-        public function __construct(string $message = '', int $code = 0, \Throwable $previous = null)
+    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
         {
             parent::__construct($message, $code, $previous);
             if ($previous === null) {
@@ -29,7 +34,7 @@ if (getenv('RUNTEST') !== false && (
                 $lastBackTrace = $backTrace[1];
                 if (isset($lastBackTrace['file'])) {
                     $this->setFilePosition($lastBackTrace['file'], $lastBackTrace['line']);
-                } elseif (isset($lastBackTrace['function']) && $lastBackTrace['function'] = 'Assert\{closure}') {
+                } elseif (isset($lastBackTrace['function']) && $lastBackTrace['function'] === 'Assert\{closure}') {
                     $this->setFilePosition($lastBackTrace['args'][2], $lastBackTrace['args'][3]);
                 }
             } else {
@@ -45,22 +50,100 @@ if (getenv('RUNTEST') !== false && (
         }
     }
 
-    \set_error_handler(function ($severity, $message, $file, $line) {
-        throw (new \Assert\Exception($message, $severity))->setFilePosition($file, $line);
-    });
+set_error_handler(function ($severity, $message, $file, $line) {
+    throw (new Exception($message, $severity))->setFilePosition($file, $line);
+});
 
-    /**
-     * @param bool $boolTest
-     * @param string $message
-     */
-    function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
-    {
-        if (!$boolTest) {
-            throw new Exception($message);
-        }
+/**
+ * @param bool $boolTest
+ * @param string $message
+ */
+function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
+{
+    if (!$boolTest) {
+        throw new Exception($message);
     }
+}
 
-    /**
+function ValidateDataSchema ($structure, $data, $location = '$'): array
+{
+    if (is_array($structure)) {
+        $out = [];
+        if (isAssoc($structure)) {
+            if (!is_array($data) || !isAssoc($data)) {
+                return [$location . " n'est pas une structure"];
+            }
+            foreach ($structure as $key => $value) {
+                foreach (ValidateDataSchema($structure[$key], $data[$key], $location . '.' . $key) as $err) {
+                    $out[] = $err;
+                }
+            }
+        } else {
+            if (!is_array($data) || isAssoc($data)) {
+                return [$location . " n'est pas un tableau"];
+            }
+            $nStruct = $structure[0];
+            foreach ($data as $idx => $value) {
+                foreach (ValidateDataSchema($nStruct, $value, $location . "[$idx]") as $err) {
+                    $out[] = $err;
+                }
+            }
+        }
+        return $out;
+    }
+    switch ($structure) {
+        case 'int':
+        case 'integer':
+            if (!is_int($data)) {
+                return [$location . " n'est pas de type integer"];
+            }
+            break;
+        case 'double':
+        case 'float':
+        case 'real':
+            if (!is_float($data)) {
+                return [$location . " n'est pas de type double"];
+            }
+            break;
+        case 'str':
+        case 'string':
+            if (!is_string($data)) {
+                return [$location . " n'est pas de type string"];
+            }
+            break;
+        case 'array':
+            if (!is_array($data) || isAssoc($data)) {
+                return [$location . " n'est pas un tableau"];
+            }
+            break;
+        case 'object':
+            if (!is_array($data) || !isAssoc($data)) {
+                return [$location . " n'est pas une structure"];
+            }
+            break;
+    }
+    return [];
+}
+
+/**
+ * @param $schema - description de la structure du JSON
+ * @param string $jsonString - chaine de caractère du JSON
+ * @param string $message
+ */
+function schemaJsonTest($schema, string $jsonString, string $message = 'structure JSON'): void
+{
+    $data = json_decode($jsonString, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception($message . ', la chaine de caractère n\'est pas un JSON valide');
+    }
+    $errs = ValidateDataSchema($schema, $data, '$');
+    if (!empty($errs)) {
+        throw new Exception($message . ', le schema du json n\'est pas valide, ' . implode(', ', $errs));
+    }
+}
+
+
+/**
      * @param callable $fn
      * @param \Exception $exceptionAttendu
      * @param string $message
@@ -70,7 +153,7 @@ if (getenv('RUNTEST') !== false && (
         try {
             $fn();
             throw new Exception('[NO EXCEPTION] ' . $message);
-        } catch (\Throwable $t) {
+        } catch (Throwable $t) {
             $classExceptionAttendu = get_class($exceptionAttendu);
             $classException = get_class($t);
             $parentsClassException = class_parents($t);
@@ -80,6 +163,15 @@ if (getenv('RUNTEST') !== false && (
         }
     }
 
+
+function isAssoc(array $arr)
+{
+    if ([] === $arr) {
+        return false;
+    }
+    return array_keys($arr) !== range(0, count($arr) - 1);
+}
+
     /**
      * @param callable $fn
      * @param string $message
@@ -88,7 +180,7 @@ if (getenv('RUNTEST') !== false && (
     {
         try {
             $fn();
-        } catch (\Throwable $t) {
+        } catch (Throwable $t) {
             throw new Exception(
                 $message .
                 ' [' . get_class($t) . '(' . $t->getMessage() . ')]' .
@@ -97,4 +189,4 @@ if (getenv('RUNTEST') !== false && (
         }
     }
 
-}
+//}
