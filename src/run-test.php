@@ -316,6 +316,7 @@ if (isset($options['last'])) {
 }
 
 $optionPhp = [
+    'auto_prepend_file' => realpath(__DIR__ . '/assert-error-handler-hook.php') ,
     'log_errors' => 0,
     'display_errors' => 1,
     'xdebug.remote_enable' => 1,

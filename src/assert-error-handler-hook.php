@@ -8,20 +8,25 @@ declare(strict_types=1);
 
 namespace Assert;
 
-if (getenv('RUNTEST') !== false && (
-        strtolower(getenv('RUNTEST')) === 'on'
-        || strtolower(getenv('RUNTEST')) === 'yes'
-        || getenv('RUNTEST') === true
-        || getenv('RUNTEST') == 1
-    )) {
+use RuntimeException;
+use Throwable;
+use function set_error_handler;
+
+///** @noinspection TypeUnsafeComparisonInspection */
+//if (getenv('RUNTEST') !== false && (
+//        strtolower(getenv('RUNTEST')) === 'on'
+//        || strtolower(getenv('RUNTEST')) === 'yes'
+//        || getenv('RUNTEST') === true
+//        || getenv('RUNTEST') == 1
+//    )) {
 
     /**
      * Class Exception
      * @package Assert
      */
-    class Exception extends \RuntimeException
+class Exception extends RuntimeException
     {
-        public function __construct(string $message = '', int $code = 0, \Throwable $previous = null)
+    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
         {
             parent::__construct($message, $code, $previous);
             if ($previous === null) {
@@ -29,7 +34,7 @@ if (getenv('RUNTEST') !== false && (
                 $lastBackTrace = $backTrace[1];
                 if (isset($lastBackTrace['file'])) {
                     $this->setFilePosition($lastBackTrace['file'], $lastBackTrace['line']);
-                } elseif (isset($lastBackTrace['function']) && $lastBackTrace['function'] = 'Assert\{closure}') {
+                } elseif (isset($lastBackTrace['function']) && $lastBackTrace['function'] === 'Assert\{closure}') {
                     $this->setFilePosition($lastBackTrace['args'][2], $lastBackTrace['args'][3]);
                 }
             } else {
@@ -45,22 +50,22 @@ if (getenv('RUNTEST') !== false && (
         }
     }
 
-    \set_error_handler(function ($severity, $message, $file, $line) {
-        throw (new \Assert\Exception($message, $severity))->setFilePosition($file, $line);
-    });
+set_error_handler(function ($severity, $message, $file, $line) {
+    throw (new Exception($message, $severity))->setFilePosition($file, $line);
+});
 
-    /**
-     * @param bool $boolTest
-     * @param string $message
-     */
-    function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
-    {
-        if (!$boolTest) {
-            throw new Exception($message);
-        }
+/**
+ * @param bool $boolTest
+ * @param string $message
+ */
+function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
+{
+    if (!$boolTest) {
+        throw new Exception($message);
     }
+}
 
-    /**
+/**
      * @param callable $fn
      * @param \Exception $exceptionAttendu
      * @param string $message
@@ -70,7 +75,7 @@ if (getenv('RUNTEST') !== false && (
         try {
             $fn();
             throw new Exception('[NO EXCEPTION] ' . $message);
-        } catch (\Throwable $t) {
+        } catch (Throwable $t) {
             $classExceptionAttendu = get_class($exceptionAttendu);
             $classException = get_class($t);
             $parentsClassException = class_parents($t);
@@ -88,7 +93,7 @@ if (getenv('RUNTEST') !== false && (
     {
         try {
             $fn();
-        } catch (\Throwable $t) {
+        } catch (Throwable $t) {
             throw new Exception(
                 $message .
                 ' [' . get_class($t) . '(' . $t->getMessage() . ')]' .
@@ -97,4 +102,4 @@ if (getenv('RUNTEST') !== false && (
         }
     }
 
-}
+//}

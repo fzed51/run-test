@@ -6,9 +6,7 @@ declare(strict_types=1);
  * Time: 11:47
  */
 
-require __DIR__ . '/../../vendor/autoload.php';
-
-echo "execution de : " . __FILE__;
+echo 'execution de : ' . __FILE__;
 echo PHP_EOL;
 
 echo 'Test de Assert\boolTest';
