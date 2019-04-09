@@ -14,7 +14,7 @@
     "php": "^7.1",
     "ext-xdebug": "*",
     "ext-json": "*",
-    "fzed51/console-options": "^1.0"
+    "fzed51/console-options": "^1"
   },
   "bin": [
     "./bin/run-test"

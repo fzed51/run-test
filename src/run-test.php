@@ -314,9 +314,9 @@ if (empty($listeTest)) {
 if (isset($options['last'])) {
     $listeTest = filtreNdernier($listeTest, $options['last']);
 }
-
+$assertErrorHandler = realpath(__DIR__ . '/assert-error-handler-hook.php');
 $optionPhp = [
-    'auto_prepend_file' => realpath(__DIR__ . '/assert-error-handler-hook.php') ,
+    'auto_prepend_file' =>  "\"$assertErrorHandler\"",
     'log_errors' => 0,
     'display_errors' => 1,
     'xdebug.remote_enable' => 1,
