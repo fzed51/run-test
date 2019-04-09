@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "71cc2b97483ea8daad0fff9ce24a1be9",
+    "content-hash": "a6117e422ef6dc7876418430709aaf7f",
     "packages": [
         {
             "name": "fzed51/console-options",
