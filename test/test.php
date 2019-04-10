@@ -55,3 +55,6 @@ execute_run_test('./spec-3', ['c']);
 
 message("exécution de run-test avec les fonctions d'assert");
 execute_run_test('./spec-assert');
+
+message("exécution de run-test avec l'option filtre");
+execute_run_test('./spec-4', ['f' => 'aze']);
