@@ -13,6 +13,7 @@ $options = new OptionParser([
     (new Option('coverage', 'c'))->setType(Option::T_FLAG),
     (new Option('monochrome', 'm'))->setType(Option::T_FLAG),
     (new Option('last', 'l'))->setType(Option::T_INTEGER),
+    (new Option('filtre', 'f'))->setType(Option::T_STRING),
 ]);
 $options->parse($argv);
 
@@ -44,7 +45,7 @@ function listDirectoryTest(array $dirPath = []) : array
 }
 
 /**
- * liste les fichier php d'un dossier
+ * liste les fichier d'un dossier en filtrant les extensions
  * @param string $directory
  * @param string $extension
  * @return array
@@ -59,8 +60,8 @@ function rechercheFichier(string $directory, string $extension): array
         }
         $fullItem = $directory . '/' . $item;
         if (is_dir($fullItem)) {
-            foreach (rechercheTest([$fullItem]) as $test) {
-                $files[] = $test;
+            foreach (rechercheFichier([$fullItem], $extension) as $fichier) {
+                $files[] = $fichier;
             }
         } elseif (is_file($fullItem)) {
             if (preg_match($regex, $item)) {
@@ -115,7 +116,7 @@ function startChrono() : callable
      * Mesure le temps depuis le début du chrono
      * @return float
      */
-    return function () use ($start) : float {
+    return static function () use ($start) : float {
         $end = microtime(true);
         return round($end - $start, 3);
     };
@@ -134,7 +135,7 @@ function formatNbCar($input, int $nbCar) : array
     if (is_array($input)) {
         return array_reduce(
             $input,
-            function (array $output, string $line) use ($nbCar) {
+            static function (array $output, string $line) use ($nbCar) {
                 $subOutput = explode("\n", wordwrap($line, $nbCar, "\n", true));
                 return array_merge($output, $subOutput);
             },
@@ -199,7 +200,7 @@ function creerDossier($name)
 {
     if (!is_dir($name)) {
         if (!mkdir($name) && !is_dir($name)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $name));
+            throw new RuntimeException(sprintf('Directory "%s" was not created', $name));
         }
         echo "Le dossier '$name' a été créé" . PHP_EOL;
     }
@@ -231,24 +232,39 @@ function netoyerDossier($name)
 function filtreNDernier(array $listeFichier, int $nDernier)
 {
     $listeFichierInfo = array_map(
-        function (string $fichier): array {
+        static function (string $fichier): array {
             return [$fichier, filemtime($fichier)];
         },
         $listeFichier
     );
     usort(
         $listeFichierInfo,
-        function ($item1, $item2) {
+        static function ($item1, $item2) {
             return $item1[1] <=> $item2[1];
         }
     );
     $listeFichierInfo = array_slice($listeFichierInfo, -1 * $nDernier);
     return array_map(
-        function (array $info): string {
+        static function (array $info): string {
             return $info[0];
         },
         $listeFichierInfo
     );
+}
+
+/**
+ * filtre les noms de test
+ * @param array $listeFichier
+ * @param string $filtre
+ * @return array
+ */
+function filtreNom(array $listeFichier, string $filtre)
+{
+    return array_filter($listeFichier, static function ($fichier) use ($filtre) {
+        $name = strtolower(basename($fichier, '.php'));
+        $filtre = strtolower($filtre);
+        return strpos($name, $filtre) !== false;
+    });
 }
 
 /**
@@ -260,7 +276,7 @@ function getNumberOfLinesInFile(string $fileName): int
 {
     $buffer = file_get_contents($fileName);
     $lines = substr_count($buffer, "\n");
-    if (\substr($buffer, -1) !== "\n") {
+    if (substr($buffer, -1) !== "\n") {
         $lines++;
     }
     return $lines;
@@ -268,7 +284,6 @@ function getNumberOfLinesInFile(string $fileName): int
 
 /**
  * donne les statistique de couverture du code
- * @param $src_directory
  * @return array
  */
 function getStatCodeCoverage(): array
@@ -291,7 +306,7 @@ function getStatCodeCoverage(): array
     }
     foreach ($stats as $file => $stat) {
         $nbLigne = count($stat);
-        $nbCover = count(array_filter($stat, function ($i) {
+        $nbCover = count(array_filter($stat, static function ($i) {
             return $i > 0;
         }));
         $stats[$file] = round($nbCover * 100 / $nbLigne);
@@ -306,9 +321,16 @@ if ($options['monochrome']) {
 }
 
 $listeDirectory = listDirectoryTest($options->getParameters());
-$listeTest = rechercheTest($listeDirectory, true);
-if (empty($listeTest)) {
-    $listeTest = rechercheTest($listeDirectory, false);
+$listeTestForce = rechercheTest($listeDirectory, true);
+$listeTestClassic = rechercheTest($listeDirectory, false);
+if (empty($listeTestForce)) {
+    $listeTest = $listeTestClassic;
+} else {
+    $listeTest = $listeTestForce;
+}
+
+if (isset($options['filtre'])) {
+    $listeTest = filtreNom($listeTest, $options['filtre']);
 }
 
 if (isset($options['last'])) {
@@ -345,7 +367,8 @@ if ($options['coverage']) {
 }
 
 $optionPhpStr = array2Options($optionPhp);
-
+$succes = 0;
+$fail = 0;
 putenv('RUNTEST=On');
 foreach ($listeTest as $test) {
     $commande = "php $optionPhpStr $codecoverage\"$test\"";
@@ -362,11 +385,30 @@ foreach ($listeTest as $test) {
 
     if ($retour !== 0) {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
+        $fail++;
     } else {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;
+        $succes++;
     }
 }
 putenv('RUNTEST');
+
+
+/* Rapport de test */
+$nbTest = count($listeTestForce) + count($listeTestClassic);
+$nbskip = $nbTest - ($fail + $succes);
+echo 'Tests terminés : ';
+if($succes > 0) {
+    echo printColor('Green', $succes) . ' succes ';
+}
+if($fail > 0) {
+    echo printColor('Red', $fail) . ' test(s) KO ';
+}
+if($nbskip > 0) {
+    echo printColor('Yellow', $nbskip) . ' non testé(s) ';
+}
+echo '/ ' . printColor('Cyan', $nbTest) . ' tests' . PHP_EOL;
+
 
 if ($options['coverage']) {
     $cc = getStatCodeCoverage();
