@@ -367,7 +367,8 @@ if ($options['coverage']) {
 }
 
 $optionPhpStr = array2Options($optionPhp);
-
+$succes = 0;
+$fail = 0;
 putenv('RUNTEST=On');
 foreach ($listeTest as $test) {
     $commande = "php $optionPhpStr $codecoverage\"$test\"";
@@ -384,11 +385,30 @@ foreach ($listeTest as $test) {
 
     if ($retour !== 0) {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
+        $fail++;
     } else {
         echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;
+        $succes++;
     }
 }
 putenv('RUNTEST');
+
+
+/* Rapport de test */
+$nbTest = count($listeTestForce) + count($listeTestClassic);
+$nbskip = $nbTest - ($fail + $succes);
+echo 'Tests terminés : ';
+if($succes > 0) {
+    echo printColor('Green', $succes) . ' succes ';
+}
+if($fail > 0) {
+    echo printColor('Red', $fail) . ' test(s) KO ';
+}
+if($nbskip > 0) {
+    echo printColor('Yellow', $nbskip) . ' non testé(s) ';
+}
+echo '/ ' . printColor('Cyan', $nbTest) . ' tests' . PHP_EOL;
+
 
 if ($options['coverage']) {
     $cc = getStatCodeCoverage();
