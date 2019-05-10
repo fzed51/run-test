@@ -370,6 +370,7 @@ $optionPhpStr = array2Options($optionPhp);
 $succes = 0;
 $fail = 0;
 putenv('RUNTEST=On');
+$masterChrono = startChrono();
 foreach ($listeTest as $test) {
     $commande = "php $optionPhpStr $codecoverage\"$test\"";
     echo "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
@@ -391,6 +392,7 @@ foreach ($listeTest as $test) {
         $succes++;
     }
 }
+$masterTime = $masterChrono();
 putenv('RUNTEST');
 
 
@@ -408,6 +410,7 @@ if($nbskip > 0) {
     echo printColor('Yellow', $nbskip) . ' non testé(s) ';
 }
 echo '/ ' . printColor('Cyan', $nbTest) . ' tests' . PHP_EOL;
+echo "test(s) effectué(s) en $masterTime s." . PHP_EOL;
 
 
 if ($options['coverage']) {

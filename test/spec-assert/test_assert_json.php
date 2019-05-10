@@ -23,11 +23,44 @@ $json = json_encode(['data' => 'coucou', 'other' => 4]);
 $schem = ['data' => 'string', 'other' => 'int'];
 Assert\schemaJsonTest($schem, $json);
 
+$schemOk = [
+    [
+        'id' => 'int', 'lettre' => 'str', 'numero' => 'int',
+        'individu?' => ['id' => 'int', 'nom?' => 'str', 'prenom' => 'str']
+    ]
+];
+$schemKo = [
+    [
+        'id' => 'int', 'lettre' => 'str', 'numero' => 'int',
+        'individu' => ['id' => 'int', 'nom?' => 'str', 'prenom' => 'str']
+    ]
+];
+
+$json = '['
+    . '{"id":256,"lettre":"A","numero":1}'
+    . ']';
+Assert\schemaJsonTest($schemOk, $json);
+try {
+    Assert\schemaJsonTest($schemKo, $json);
+    throw new \Exception("Doit retourner une \Assert\Exception");
+} catch (\Assert\Exception $e) {}
+
+
+$json = '['
+    . '{"id":256,"lettre":"A","numero":1,'
+    . '"individu": null}'
+    . ']';
+Assert\schemaJsonTest($schemOk, $json);
+try {
+    Assert\schemaJsonTest($schemKo, $json);
+    throw new \Exception("Doit retourner une \Assert\Exception");
+} catch (\Assert\Exception $e) {}
+
 try {
     $json = json_encode(['data' => 'coucou', 'other' => 4]);
     $schem = ['data' => 'int', 'other' => 'string'];
     Assert\schemaJsonTest($schem, $json);
-    throw \Exception("Doit retourner une \Assert\Exception");
+    throw new \Exception("Doit retourner une \Assert\Exception");
 } catch (\Assert\Exception $e) {
     // echo $e->getMessage();
 }
