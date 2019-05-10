@@ -65,6 +65,12 @@ function boolTest(bool $boolTest, string $message = 'doit etre vrai'): void
     }
 }
 
+/**
+ * @param $structure
+ * @param $data
+ * @param string $location
+ * @return array
+ */
 function ValidateDataSchema ($structure, $data, $location = '$'): array
 {
     if (is_array($structure)) {
@@ -74,8 +80,14 @@ function ValidateDataSchema ($structure, $data, $location = '$'): array
                 return [$location . " n'est pas une structure"];
             }
             foreach ($structure as $key => $value) {
-                foreach (ValidateDataSchema($structure[$key], $data[$key], $location . '.' . $key) as $err) {
-                    $out[] = $err;
+                $isOptionnal = substr($key, -1) === '?';
+                $datakey = $isOptionnal ? substr($key, 0, -1) : $key;
+                if (array_key_exists($datakey, $data) && !($data[$datakey] === null && is_array($structure[$key]))) {
+                    foreach (ValidateDataSchema($structure[$key], $data[$datakey], $location . '.' . $key) as $err) {
+                        $out[] = $err;
+                    }
+                } elseif (!$isOptionnal) {
+                    $out[] = "$key n'existe pas dans $location";
                 }
             }
         } else {
@@ -90,6 +102,11 @@ function ValidateDataSchema ($structure, $data, $location = '$'): array
             }
         }
         return $out;
+    }
+    $isNullable = substr($structure, -1) === '?';
+    $structure = $isNullable ? substr($structure, 0, -1) : $structure;
+    if ($isNullable && $data === null) {
+        return [];
     }
     switch ($structure) {
         case 'int':
