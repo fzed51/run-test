@@ -58,3 +58,8 @@ execute_run_test('./spec-assert');
 
 message("exécution de run-test avec l'option filtre");
 execute_run_test('./spec-4', ['f' => 'aze']);
+
+message('exécution de run-test avec rapport légé');
+execute_run_test('./spec-3', ['q']);
+message('exécution de run-test avec rapport légé avec erreur');
+execute_run_test('./spec-5-error', ['q']);
