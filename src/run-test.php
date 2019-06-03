@@ -14,6 +14,7 @@ $options = new OptionParser([
     (new Option('monochrome', 'm'))->setType(Option::T_FLAG),
     (new Option('last', 'l'))->setType(Option::T_INTEGER),
     (new Option('filtre', 'f'))->setType(Option::T_STRING),
+    (new Option('quiet', 'q'))->setType(Option::T_FLAG),
 ]);
 $options->parse($argv);
 
@@ -371,9 +372,15 @@ $succes = 0;
 $fail = 0;
 putenv('RUNTEST=On');
 $masterChrono = startChrono();
+$quietLog = "";
 foreach ($listeTest as $test) {
+    $localQuietLog = '';
     $commande = "php $optionPhpStr $codecoverage\"$test\"";
-    echo "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
+    if ($options['quiet']) {
+        $localQuietLog .= "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
+    } else {
+        echo "\u{250C}\u{2500}< " . printColor('Cyan', $test) . PHP_EOL;
+    }
 
     $output = [];
     $chrono = startChrono();
@@ -381,20 +388,39 @@ foreach ($listeTest as $test) {
     $time = $chrono();
 
     if(!empty($output)){
-        echo "\u{2502} " . implode(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
+        if ($options['quiet']) {
+            $localQuietLog .= "\u{2502} " . implode(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
+        } else {
+            echo "\u{2502} " . implode(PHP_EOL . "\u{2502} ", formatNbCar($output, 110)) . PHP_EOL;
+        }
     }
 
     if ($retour !== 0) {
-        echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
+        if ($options['quiet']) {
+            $localQuietLog .= "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
+            $quietLog .= $localQuietLog;
+            echo printColor('Red', '*');
+        } else {
+            echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
+        }
         $fail++;
     } else {
-        echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;
+        if ($options['quiet']) {
+            $localQuietLog .= "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;
+            echo printColor('Green', '.');
+        } else {
+            echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;
+        }
         $succes++;
     }
 }
 $masterTime = $masterChrono();
 putenv('RUNTEST');
 
+if ($options['quiet']) {
+    echo PHP_EOL;
+    echo $quietLog;
+}
 
 /* Rapport de test */
 $nbTest = count($listeTestForce) + count($listeTestClassic);
