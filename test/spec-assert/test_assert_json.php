@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+declare (strict_types = 1);
 /**
  * User: Fabien Sanchez
  * Date: 12/03/2019
@@ -43,7 +43,7 @@ Assert\schemaJsonTest($schemOk, $json);
 try {
     Assert\schemaJsonTest($schemKo, $json);
     throw new \Exception("Doit retourner une \Assert\Exception");
-} catch (\Assert\Exception $e) {}
+} catch (\Assert\Exception $e) { }
 
 
 $json = '['
@@ -54,12 +54,32 @@ Assert\schemaJsonTest($schemOk, $json);
 try {
     Assert\schemaJsonTest($schemKo, $json);
     throw new \Exception("Doit retourner une \Assert\Exception");
-} catch (\Assert\Exception $e) {}
+} catch (\Assert\Exception $e) { }
 
 try {
     $json = json_encode(['data' => 'coucou', 'other' => 4]);
     $schem = ['data' => 'int', 'other' => 'string'];
     Assert\schemaJsonTest($schem, $json);
+    throw new \Exception("Doit retourner une \Assert\Exception");
+} catch (\Assert\Exception $e) {
+    // echo $e->getMessage();
+}
+
+
+try {
+    $json = json_encode((object)[
+        'a' => (object)[]
+    ]);
+    $schem = [
+        'a' => [
+            'id?' => 'int'
+        ]
+    ];
+    $schem2 = ['a' => 'object'];
+    $schem3 = ['b?' => 'object'];
+    Assert\schemaJsonTest($schem, $json);
+    Assert\schemaJsonTest($schem2, $json);
+    Assert\schemaJsonTest($schem3, $json);
     throw new \Exception("Doit retourner une \Assert\Exception");
 } catch (\Assert\Exception $e) {
     // echo $e->getMessage();
