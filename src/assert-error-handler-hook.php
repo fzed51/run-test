@@ -76,18 +76,19 @@ function ValidateDataSchema ($structure, $data, $location = '$'): array
     if (is_array($structure)) {
         $out = [];
         if (isAssoc($structure)) {
-            if (!is_array($data) || !isAssoc($data)) {
+            if (!is_object($data)) {
                 return [$location . " n'est pas une structure"];
             }
+            $properties = array_keys((array)$data);
             foreach ($structure as $key => $value) {
                 $isOptionnal = substr($key, -1) === '?';
                 $datakey = $isOptionnal ? substr($key, 0, -1) : $key;
-                if (array_key_exists($datakey, $data) && !($data[$datakey] === null && is_array($structure[$key]))) {
-                    foreach (ValidateDataSchema($structure[$key], $data[$datakey], $location . '.' . $key) as $err) {
+                if (in_array($datakey, $properties, true) && $data->{$datakey} !== null) {
+                    foreach (ValidateDataSchema($structure[$key], $data->{$datakey}, $location . '.' . $key) as $err) {
                         $out[] = $err;
                     }
                 } elseif (!$isOptionnal) {
-                    $out[] = "$key n'existe pas dans $location";
+                    $out[] = "$datakey n'existe pas dans $location";
                 }
             }
         } else {
@@ -149,7 +150,7 @@ function ValidateDataSchema ($structure, $data, $location = '$'): array
  */
 function schemaJsonTest($schema, string $jsonString, string $message = 'structure JSON'): void
 {
-    $data = json_decode($jsonString, true);
+    $data = json_decode($jsonString, false);
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception($message . ', la chaine de caractère n\'est pas un JSON valide');
     }
