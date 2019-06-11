@@ -135,7 +135,7 @@ function ValidateDataSchema ($structure, $data, $location = '$'): array
             }
             break;
         case 'object':
-            if (!is_array($data) || !isAssoc($data)) {
+            if (!is_object($data)) {
                 return [$location . " n'est pas une structure"];
             }
             break;
