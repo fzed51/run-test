@@ -83,9 +83,11 @@ function ValidateDataSchema ($structure, $data, $location = '$'): array
             foreach ($structure as $key => $value) {
                 $isOptionnal = substr($key, -1) === '?';
                 $datakey = $isOptionnal ? substr($key, 0, -1) : $key;
-                if (in_array($datakey, $properties, true) && $data->{$datakey} !== null) {
-                    foreach (ValidateDataSchema($structure[$key], $data->{$datakey}, $location . '.' . $key) as $err) {
-                        $out[] = $err;
+                if (in_array($datakey, $properties, true)) {
+                    if (!$isOptionnal || $data->{$datakey} !== null) {
+                        foreach (ValidateDataSchema($structure[$key], $data->{$datakey}, $location . '.' . $datakey) as $err) {
+                            $out[] = $err;
+                        }
                     }
                 } elseif (!$isOptionnal) {
                     $out[] = "$datakey n'existe pas dans $location";
