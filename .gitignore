@@ -8,3 +8,5 @@
 
 vendor/
 test/code-coverage/
+test/trace/
+test/profile/

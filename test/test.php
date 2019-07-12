@@ -44,6 +44,12 @@ function message($message)
 message('exécution de run-test');
 execute_run_test('./spec');
 
+message('exécution de run-test avec trace');
+execute_run_test('./spec', ['t']);
+
+message('exécution de run-test avec profile');
+execute_run_test('./spec', ['p']);
+
 message('exécution de run-test sans couleurs');
 execute_run_test('./spec', ['m']);
 
