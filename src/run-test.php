@@ -359,7 +359,7 @@ if ($options['trace']) {
     $traceDir = getcwd() . '/trace';
     creerDossier($traceDir);
     $optionPhp['xdebug.auto_trace'] = 1;
-    $optionPhp['xdebug.trace_output_dir'] = $profileDir;
+    $optionPhp['xdebug.trace_output_dir'] = $traceDir;
 }
 $codecoverage = '';
 if ($options['coverage']) {
