@@ -69,3 +69,7 @@ message('exécution de run-test avec rapport légé');
 execute_run_test('./spec-3', ['q']);
 message('exécution de run-test avec rapport légé avec erreur');
 execute_run_test('./spec-5-error', ['q']);
+
+message('exécution de run-test avec l\'option stop on fail');
+execute_run_test('./spec-3-tests', ['s']);
+message('le test doit afficher : 1 succes 1 test(s) KO 1 non testé(s) / 3 tests');
