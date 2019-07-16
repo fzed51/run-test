@@ -15,6 +15,7 @@ $options = new OptionParser([
     (new Option('last', 'l'))->setType(Option::T_INTEGER),
     (new Option('filtre', 'f'))->setType(Option::T_STRING),
     (new Option('quiet', 'q'))->setType(Option::T_FLAG),
+    (new Option('stoponfail', 's'))->setType(Option::T_FLAG),
 ]);
 $options->parse($argv);
 
@@ -406,6 +407,9 @@ foreach ($listeTest as $test) {
             echo "\u{2514}\u{2500}> ({$time}s) " . printColor('Red', 'FAIL') . PHP_EOL;
         }
         $fail++;
+        if($options['stoponfail']){
+            break;
+        }
     } else {
         if ($options['quiet']) {
             $localQuietLog .= "\u{2514}\u{2500}> ({$time}s) " . printColor('Green', 'PASS') . PHP_EOL;

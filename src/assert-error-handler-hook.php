@@ -217,3 +217,13 @@ function noThrowTest(callable $fn, string $message = "ne doit pas lever d'except
         );
     }
 }
+
+function instanceTest($object, string $className, string $message = ''): void
+{
+    if (!class_exists($className)) {
+        throw new Exception("Le test n'est pas valide, " . $className . " n'est pas une classe.");
+    }
+    if (!is_a($object, $className)) {
+        throw new Exception(!empty($message) ? $message : "L'objet testé n'est pas une instance de " . $className);
+    }
+}
