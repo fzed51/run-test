@@ -8,6 +8,7 @@ use Console\Options\OptionParser;
  */
 
 $options = new OptionParser([
+    (new Option('help', 'h'))->setType(Option::T_FLAG),
     (new Option('trace', 't'))->setType(Option::T_FLAG),
     (new Option('profile', 'p'))->setType(Option::T_FLAG),
     (new Option('coverage', 'c'))->setType(Option::T_FLAG),
@@ -18,6 +19,20 @@ $options = new OptionParser([
     (new Option('stoponfail', 's'))->setType(Option::T_FLAG),
 ]);
 $options->parse($argv);
+
+function showUsage(): void
+{
+    echo printColor('Green', 'Usage de run-test' . PHP_EOL . PHP_EOL);
+    echo printColor('Yellow', "-h, -help" . PHP_EOL); echo "Affichage de l'aide" . PHP_EOL;
+    echo printColor('Yellow', "-t, -trace" . PHP_EOL); echo "Activation les trace (xDebug)" . PHP_EOL;
+    echo printColor('Yellow', "-p, -profile" . PHP_EOL); echo "Activation le prifilage (xDebug)" . PHP_EOL;
+    echo printColor('Yellow', "-c, -coverage" . PHP_EOL); echo "Activation le code coverage trace (xDebug)" . PHP_EOL;
+    echo printColor('Yellow', "-m, -monochrome" . PHP_EOL); echo "Désactive les couleurs dans la sortie" . PHP_EOL;
+    echo printColor('Yellow', "-l {nb_test}, -last {nb_test}" . PHP_EOL); echo "Execute uniquement les {nb_test} dernier test modifié" . PHP_EOL;
+    echo printColor('Yellow', "-f {chaine}, -filtre {chaine}" . PHP_EOL); echo "Execute uniquement les test qui contienne {chaine} dans leur nom" . PHP_EOL;
+    echo printColor('Yellow', "-q, -quiet" . PHP_EOL); echo "Limite la quantite d'information en sortie sortie" . PHP_EOL;
+    echo printColor('Yellow', "-s, -stoponfail" . PHP_EOL); echo "Arrete les tests à la 1ere erreur" . PHP_EOL;
+}
 
 /**
  * Liste les dossiers de test *
@@ -320,6 +335,11 @@ if ($options['monochrome']) {
     define('MONOCHROME', true);
 } else {
     define('MONOCHROME', false);
+}
+
+if ($options['help']) {
+    showUsage();
+    die();
 }
 
 $listeDirectory = listDirectoryTest($options->getParameters());
